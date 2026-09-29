@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart - LavniGlow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">LavniGlow</a>
+            <a href="index.html" class="btn btn-outline-secondary btn-sm">Continue Shopping</a>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <h2>Your Shopping Cart</h2>
+        <div class="row mt-4">
+            <div class="col-lg-8">
+                <div id="cart-items" class="list-group mb-3"></div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card p-3">
+                    <h4>Order Summary</h4>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Total Amount:</span>
+                        <strong id="cart-total">₹0</strong>
+                    </div>
+                    <h5>Shipping Details (Manual Entry)</h5>
+                    <form id="checkout-form">
+                        <div class="mb-2">
+                            <input type="text" class="form-control" id="order-name" placeholder="Full Name" required>
+                        </div>
+                        <div class="mb-2">
+                            <input type="tel" class="form-control" id="order-mobile" placeholder="Mobile Number" required>
+                        </div>
+                        <div class="mb-2">
+                            <textarea class="form-control" id="order-address" placeholder="Delivery Address" rows="2" required></textarea>
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" class="form-control" id="order-city" placeholder="City" required>
+                        </div>
+                        <div class="mb-3">
+                            <input type="text" class="form-control" id="order-pincode" placeholder="Pincode" required>
+                        </div>
+                        <div class="mb-3 text-muted small">Payment Mode: <strong>Cash on Delivery (COD)</strong></div>
+                        <button type="submit" class="btn btn-success w-100">Place Order</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        function renderCart() {
+            const container = document.getElementById('cart-items');
+            const totalEl = document.getElementById('cart-total');
+            container.innerHTML = '';
+            let total = 0;
+
+            if (cart.length === 0) {
+                container.innerHTML = '<p class="text-muted">Your cart is empty.</p>';
+                totalEl.innerText = '₹0';
+                return;
+            }
+
+            cart.forEach((item, index) => {
+                total += item.price * item.quantity;
+                container.innerHTML += `
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">${item.name}</h6>
+                            <small class="text-muted">₹${item.price} x ${item.quantity}</small>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="changeQty(${index}, 1)">+</button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="changeQty(${index}, -1)">-</button>
+                            <button class="btn btn-sm btn-danger" onclick="removeItem(${index})">Remove</button>
+                        </div>
+                    </div>
+                `;
+            });
+            totalEl.innerText = `₹${total}`;
+        }
+
+        function changeQty(index, delta) {
+            cart[index].quantity += delta;
+            if (cart[index].quantity <= 0) cart.splice(index, 1);
+            localStorage.setItem('lavni_cart', JSON.stringify(cart));
+            renderCart();
+            updateBadgeCounts();
+        }
+
+        function removeItem(index) {
+            cart.splice(index, 1);
+            localStorage.setItem('lavni_cart', JSON.stringify(cart));
+            renderCart();
+            updateBadgeCounts();
+        }
+
+        document.getElementById('checkout-form').addEventListener('submit', async(e) => {
+            e.preventDefault();
+            if (cart.length === 0) {
+                alert('Your cart is empty!');
+                return;
+            }
+
+            const orderData = {
+                userName: document.getElementById('order-name').value,
+                mobile: document.getElementById('order-mobile').value,
+                address: document.getElementById('order-address').value,
+                city: document.getElementById('order-city').value,
+                pincode: document.getElementById('order-pincode').value,
+                products: cart,
+                totalAmount: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+            };
+
+            const res = await fetch('/api/place-order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(orderData)
+            });
+            const data = await res.json();
+            if (data.success) {
+                localStorage.removeItem('lavni_cart');
+                window.location.href = `order-success.html?id=${data.orderId}`;
+            } else {
+                alert(data.message);
+            }
+        });
+
+        renderCart();
+    </script>
+</body>
+
+</html>

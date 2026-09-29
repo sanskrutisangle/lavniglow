@@ -1,0 +1,25 @@
+CREATE DATABASE IF NOT EXISTS lavniglow_db;
+USE lavniglow_db;
+
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    gender VARCHAR(10),
+    mobile VARCHAR(15),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_name VARCHAR(100) NOT NULL,
+    mobile VARCHAR(15) NOT NULL,
+    address TEXT NOT NULL,
+    city VARCHAR(50) NOT NULL,
+    pincode VARCHAR(10) NOT NULL,
+    products TEXT NOT NULL,
+    total_amount DECIMAL(10,2) NOT NULL,
+    payment_method VARCHAR(20) DEFAULT 'Cash on Delivery',
+    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
